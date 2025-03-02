@@ -5,7 +5,7 @@
 #include<websocketpp/config/asio_no_tls.hpp>
 
 typedef websocketpp::server<websocketpp::config::asio>wsserver_t;
-void wshttp_callback(wsserver_t*srv,websocketpp::connection_hdl hd1)
+void wshttp_callback(wsserver_t*srv,websocketpp::connection_hdl hd1)//收到http请求调用这个函数
 {
     wsserver_t::connection_ptr conn=srv->get_con_from_hdl(hd1);
     std::cout<<"body "<<conn->get_request_body()<<std::endl;
@@ -18,15 +18,15 @@ void wshttp_callback(wsserver_t*srv,websocketpp::connection_hdl hd1)
     conn->append_header("Content-Type","text/html");
     conn->set_status(websocketpp::http::status_code::ok);
 }
-void wsopen_callback(wsserver_t*srv,websocketpp::connection_hdl hd1)
+void wsopen_callback(wsserver_t*srv,websocketpp::connection_hdl hd1)//连接建立调用这个函数
 {
     std::cout<<"websocket握手成功!!"<<std::endl;
 }
-void wsclose_callback(wsserver_t*srv,websocketpp::connection_hdl hd1)
+void wsclose_callback(wsserver_t*srv,websocketpp::connection_hdl hd1)//连接断开调用这个函数
 {
     std::cout<<"websocket连接断开!!"<<std::endl;
 }
-void wsmsg_callback(wsserver_t*srv,websocketpp::connection_hdl hd1,wsserver_t::message_ptr msg)
+void wsmsg_callback(wsserver_t*srv,websocketpp::connection_hdl hd1,wsserver_t::message_ptr msg)//收到消息调用这个函数
 {
     wsserver_t::connection_ptr conn=srv->get_con_from_hdl(hd1);
     std::cout<<"wsmsg: "<<msg->get_payload()<<std::endl;
