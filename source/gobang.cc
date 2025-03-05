@@ -2,6 +2,7 @@
 #include "logger.hpp"
 #include "util.hpp"
 #include"enterdb.hpp"
+#include"manageOnlineGamer.hpp"
 #define HOST "127.0.0.1"
 #define PORT 3306
 #define USER "root"
@@ -93,9 +94,32 @@ val["password"]="123123";
 
 
 }
+
+void testonlineuser()
+{
+    online_manager om;
+    wsserver_t::connection_ptr tmp;
+    om.enter_game_hall(1,tmp);
+    om.enter_game_room(2,tmp);
+    if(om.is_in_game_hall(1))std::cout<<"1"<<std::endl;
+    if(om.is_in_game_hall(2))std::cout<<"2"<<std::endl;
+    if(om.is_in_game_room(1))std::cout<<"3"<<std::endl;
+    if(om.is_in_game_room(2))std::cout<<"4"<<std::endl;
+
+    om.get_conn_from_room(2);
+
+    om.exit_game_hall(1);
+    om.exit_game_room(2);
+    if(om.is_in_game_hall(1))std::cout<<"11"<<std::endl;
+    if(om.is_in_game_hall(2))std::cout<<"22"<<std::endl;
+    if(om.is_in_game_room(1))std::cout<<"33"<<std::endl;
+    if(om.is_in_game_room(2))std::cout<<"44"<<std::endl;
+
+    
+}
 int main()
 {
-    testenterdb();
+    testonlineuser();
 
     return 0;
 }

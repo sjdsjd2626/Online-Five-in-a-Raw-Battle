@@ -8,8 +8,11 @@
 #include <fstream>
 #include <mysql/mysql.h>
 #include <jsoncpp/json/json.h>
+#include<websocketpp/server.hpp>
+#include<websocketpp/config/asio_no_tls.hpp>
 #include "logger.hpp"
 
+typedef websocketpp::server<websocketpp::config::asio>wsserver_t;//manageOnlineGamer.hpp中会用到
 class mysql_util
 {
 public:
