@@ -44,22 +44,23 @@ int main()
         return -1;
     }
     // 5.1将查询结果保存到本地
-    MYSQL_RES* res=mysql_store_result(mysql);
-    if(res==NULL)
-    {
-        mysql_close(mysql);
-        return -1;
-    }
+    MYSQL_RES *res = mysql_store_result(mysql); // 就算最后没有查到任何东西，res也不为空，而是去看行数，行数为0，表示没有查询结果
+
     // 5.2获取查询结果集中的结果条数
-    int num_row=mysql_num_rows(res);
-    int num_col=mysql_num_fields(res);
-    // 5.3遍历获取结果集中的每一条数据进行处理
-    for(int i=0;i<num_row;i++)
+    int num_row = mysql_num_rows(res);
+    if (num_row == 0)
     {
-        MYSQL_ROW row=mysql_fetch_row(res);
-        for(int j=0;j<num_col;j++)
+        printf("not find anything");
+        return 0;
+    }
+    int num_col = mysql_num_fields(res);
+    // 5.3遍历获取结果集中的每一条数据进行处理
+    for (int i = 0; i < num_row; i++)
+    {
+        MYSQL_ROW row = mysql_fetch_row(res);
+        for (int j = 0; j < num_col; j++)
         {
-            printf("%s\t",row[j]);
+            printf("%s\t", row[j]);
         }
         printf("\n");
     }
