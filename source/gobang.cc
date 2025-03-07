@@ -1,8 +1,5 @@
 
-#include "logger.hpp"
-#include "util.hpp"
-#include"enterdb.hpp"
-#include"manageOnlineGamer.hpp"
+#include"room.hpp"
 #define HOST "127.0.0.1"
 #define PORT 3306
 #define USER "root"
@@ -117,9 +114,17 @@ void testonlineuser()
 
     
 }
+
+void testrooms()
+{
+    user_table ut(HOST,USER,PASSWD,DBNAME);
+    online_manager om;
+    room_manager rm(&ut,&om);
+    rm.create_room(10,20);
+}
 int main()
 {
-    testonlineuser();
+    testrooms();
 
     return 0;
 }
