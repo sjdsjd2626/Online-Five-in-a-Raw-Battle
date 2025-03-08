@@ -5,6 +5,7 @@
 #include<websocketpp/config/asio_no_tls.hpp>
 
 typedef websocketpp::server<websocketpp::config::asio>wsserver_t;
+void print(const char* str);
 void wshttp_callback(wsserver_t*srv,websocketpp::connection_hdl hd1)//收到http请求调用这个函数
 {
     wsserver_t::connection_ptr conn=srv->get_con_from_hdl(hd1);
@@ -17,7 +18,11 @@ void wshttp_callback(wsserver_t*srv,websocketpp::connection_hdl hd1)//收到http
     conn->set_body(body);
     conn->append_header("Content-Type","text/html");
     conn->set_status(websocketpp::http::status_code::ok);
+    wsserver_t::timer_ptr tp=srv->set_timer(5000,std::bind(print,"helloworld"));//5000毫秒后执行print任务
+    tp->cancel();//定时任务的取消实际上是取消定时，而立即执行任务
 }
+void print(const char* str){std::cout<<str<<std::endl;}
+
 void wsopen_callback(wsserver_t*srv,websocketpp::connection_hdl hd1)//连接建立调用这个函数
 {
     std::cout<<"websocket握手成功!!"<<std::endl;
