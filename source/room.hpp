@@ -31,6 +31,7 @@ private:
     void add_forbidden_words(std::vector<std::string> &forbidden_words)
     {
         forbidden_words.push_back("傻逼");
+        //......
     }
     // cross：横  vertival：竖
     int testcount(int row, int col, int cross, int vertival) // 看一排，看一列，看斜方向成不成立五子连珠

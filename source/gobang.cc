@@ -1,6 +1,5 @@
 
-#include"room.hpp"
-#include"session.hpp"
+#include"server.hpp"
 #define HOST "127.0.0.1"
 #define PORT 3306
 #define USER "root"
@@ -125,7 +124,7 @@ void testrooms()
 }
 int main()
 {
-    testrooms();
-
+    gobang_server gs(HOST,USER,PASSWD,DBNAME);
+    gs.start(5566);
     return 0;
 }
