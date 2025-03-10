@@ -8,6 +8,26 @@
 
     <link rel="stylesheet" href="./css/common.css">
     <link rel="stylesheet" href="./css/login.css">
+    <style>
+        /* 可选的：为超链接设置一些样式 */
+        a {
+            text-decoration: none;    /* 移除下划线 */
+            margin-left: 110px;
+            color: #007BFF;           /* 设置链接颜色 */
+            font-size: 15px;          /* 设置字体大小 */
+            padding: 5px 5px;       /* 设置内边距，使链接看起来更大一些 */
+            border-radius: 5px;       /* 设置边框圆角 */
+        }
+ 
+        a:hover {
+            background-color: #0056b3; /* 设置悬停时的背景颜色 */
+            color: white;             /* 设置悬停时的文本颜色 */
+        }
+        .hhh
+        {
+            margin-top: 20px;
+        }
+        </style>
 </head>
 <body>
     <div class="nav">
@@ -30,12 +50,49 @@
             </div>
             <!-- 提交按钮 -->
             <div class="row">
-                <button id="submit">提交</button>
+                <button id="submit" onclick="login()">提交</button>
+            </div>
+            <div class="hhh">
+                <a href="register.html">还没有注册？点我注册</a>
             </div>
         </div>
 
     </div>
 
     <script src="./js/jquery.min.js"></script>
+    <script>
+        function login()
+        {//如果用户输入的信息不全
+            if(document.getElementById("user_name").value==""||document.getElementById("password").value=="")
+            {
+                alert("请输入用户名/密码");
+                document.getElementById("user_name").value="";
+                document.getElementById("password").value="";
+                return;
+            }
+            var login_info=
+            {
+                username:document.getElementById("user_name").value,
+                password:document.getElementById("password").value
+            }
+            $.ajax({
+                url:"/login",
+                type:"post",
+                data:JSON.stringify(login_info),
+                success:function(res)//成功后调用
+                {
+                    alert("登录成功");
+                    window.location.assign("/game_hall.html");
+                },
+                error:function(xhr)//失败后调用
+                {
+                    document.getElementById("user_name").value="";
+                    document.getElementById("password").value="";
+                    alert("用户名/密码错误");
+                }
+            })
+        }
+    </script>
+
 </body>
 </html>

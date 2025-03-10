@@ -20,22 +20,22 @@ private:
     matcher _mm;
 
 private:
-    void http_callback1(websocketpp::connection_hdl hd1)
-    {
-        wsserver_t::connection_ptr conn = _wssrv.get_con_from_hdl(hd1);
-        websocketpp::http::parser::request req = conn->get_request();
-        std::string method = req.get_method();
-        std::string uri = req.get_uri();
-        std::string pathname;
-        if (uri == "/")
-            pathname = _web_root + "/register.html";
-        else
-            pathname = _web_root + uri;
-        std::string body;
-        file_util::read(pathname, &body);
-        conn->set_status(websocketpp::http::status_code::ok);
-        conn->set_body(body);
-    }
+    // void http_callback1(websocketpp::connection_hdl hd1)
+    // {
+    //     wsserver_t::connection_ptr conn = _wssrv.get_con_from_hdl(hd1);
+    //     websocketpp::http::parser::request req = conn->get_request();
+    //     std::string method = req.get_method();
+    //     std::string uri = req.get_uri();
+    //     std::string pathname;
+    //     if (uri == "/")
+    //         pathname = _web_root + "/register.html";
+    //     else
+    //         pathname = _web_root + uri;
+    //     std::string body;
+    //     file_util::read(pathname, &body);
+    //     conn->set_status(websocketpp::http::status_code::ok);
+    //     conn->set_body(body);
+    // }
     void file_handler(wsserver_t::connection_ptr &conn)
     {
         // 静态资源请求的处理
@@ -58,7 +58,6 @@ private:
         }
         conn->set_body(body);
         conn->set_status(websocketpp::http::status_code::ok);
-        return;
     }
     void http_resp(wsserver_t::connection_ptr &conn, bool result, websocketpp::http::status_code::value code, const std::string &reason)
     {
@@ -74,12 +73,10 @@ private:
     void reg(wsserver_t::connection_ptr &conn)
     {
         // 用户注册功能请求的处理
-        websocketpp::http::parser::request req = conn->get_request();
         std::string req_body = conn->get_request_body();
         Json::Value login_info;
-        Json::Value resq_json;
         bool ret = json_util::UnSerialize(req_body, &login_info);
-        if (ret == false)
+        if (ret == false) // 反序列化失败，不是json格式
             return http_resp(conn, false, websocketpp::http::status_code::bad_request, "请求的正文格式错误");
         if (login_info["username"].isNull() || login_info["password"].isNull())
             return http_resp(conn, false, websocketpp::http::status_code::bad_request, "请输入用户名/密码");
@@ -91,10 +88,92 @@ private:
     void login(wsserver_t::connection_ptr &conn)
     {
         // 用户登录功能请求的处理
+        std::string req_body = conn->get_request_body();
+        Json::Value login_info;
+        bool ret = json_util::UnSerialize(req_body, &login_info);
+        if (ret == false) // 反序列化失败，不是json格式
+            return http_resp(conn, false, websocketpp::http::status_code::bad_request, "请求的正文格式错误");
+        if (login_info["username"].isNull() || login_info["password"].isNull())
+            return http_resp(conn, false, websocketpp::http::status_code::bad_request, "请输入用户名/密码");
+        ret = _ut.login(login_info);
+        if (ret == false)
+            return http_resp(conn, false, websocketpp::http::status_code::bad_request, "用户名/密码错误");
+        // 如果登录成功，给客户端创建session，并通过cookie返回给客户端
+        int uid = login_info["id"].asInt();
+        session_ptr ssp = _sm.create_session(uid, LOGIN);
+        if (ssp.get() == nullptr)
+        {
+            DLOG("创建会话失败");
+            return http_resp(conn, false, websocketpp::http::status_code::internal_server_error, "创建会话失败");
+        }
+        // 设置session过期时间
+        _sm.set_session_expire_time(ssp->ssid(), SESSION_TIMEOUT);
+        std::string cookie_str = "SSID=" + std::to_string(ssp->ssid());
+        conn->append_header("Set-Cookie", cookie_str);
+        return http_resp(conn, true, websocketpp::http::status_code::ok, "登录成功");
+    }
+    bool get_cookie_val(const std::string &cookie_ptr, const std::string &key, std::string &val)
+    {
+        // cookie中的信息以“; ”为分隔，例如“SSID=xxx; path=xxx”
+        std::string sep = "; ";
+        std::vector<std::string> cookie_arr;
+        string_util::split(cookie_ptr, sep, &cookie_arr);
+        for (auto e : cookie_arr)
+        {
+            // e的格式就是“SSID=xxx”，当然可能有多个=，这样按不合规处理
+            std::vector<std::string> tmp;
+            string_util::split(e, "=", &tmp);
+            if (tmp.size() != 2)
+            {
+                continue;
+            }
+            if (tmp[0] == key)
+            {
+                val = tmp[1];
+                return true;
+            }
+        }
+        return false;
     }
     void info(wsserver_t::connection_ptr &conn)
     {
         // 用户信息获取功能请求的处理
+        std::string cookie_str = conn->get_request_header("Cookie");
+        if (cookie_str.empty())
+        {
+            DLOG("找不到cookie信息");
+            return http_resp(conn, false, websocketpp::http::status_code::bad_request, "找不到cookie信息");
+        }
+        std::string ssid_str;
+        bool ret = get_cookie_val(cookie_str, "SSID", ssid_str);
+        if (ret == false)
+        {
+            DLOG("找不到ssid信息");
+            return http_resp(conn, false, websocketpp::http::status_code::bad_request, "找不到ssid信息");
+        }
+        // 找到了ssid，就要去找会话信息
+        session_ptr ssp = _sm.get_session_by_ssid(std::stoi(ssid_str));
+        if (ssp.get() == nullptr)
+        {
+            DLOG("登陆过期，请重新登陆");
+            return http_resp(conn, false, websocketpp::http::status_code::bad_request, "登陆过期，请重新登陆");
+        }
+        int uid = ssp->get_user();
+        Json::Value user_info;
+        ret = _ut.select_by_id(uid, user_info);
+        if (ret == false)
+        {
+            DLOG("找不到用户信息");
+            return http_resp(conn, false, websocketpp::http::status_code::bad_request, "找不到用户信息");
+        }
+        std::string body;
+        json_util::Serialize(user_info, &body);
+        conn->set_body(body);
+        conn->append_header("Content-type", "application/json");
+        conn->set_status(websocketpp::http::status_code::ok);
+        // 刷新session的过期时间
+        DLOG("%s 的session过期时间刷新", user_info["username"].asCString());
+        _sm.set_session_expire_time(ssp->ssid(), SESSION_TIMEOUT);
     }
     void http_callback(websocketpp::connection_hdl hd1) // 收到http请求调用这个函数
     {
@@ -120,11 +199,144 @@ private:
             return file_handler(conn);
         }
     }
-    void wsopen_callback(websocketpp::connection_hdl hd1) // 连接建立调用这个函数
+    void wsopen_game_hall(wsserver_t::connection_ptr conn)
     {
+        // 查看有没有session信息
+        Json::Value err_resp;
+        std::string cookie_str = conn->get_request_header("Cookie");
+        if (cookie_str.empty())
+        {
+            DLOG("找不到cookie信息");
+            err_resp["optype"] = "hall_ready";
+            err_resp["reason"] = "没有找到cookie信息";
+            err_resp["result"] = false;
+            std::string body;
+            json_util::Serialize(err_resp, &body);
+            conn->send(body);
+            return;
+        }
+        std::string ssid_str;
+        bool ret = get_cookie_val(cookie_str, "SSID", ssid_str);
+        if (ret == false)
+        {
+            DLOG("找不到ssid信息");
+            err_resp["optype"] = "hall_ready";
+            err_resp["reason"] = "找不到ssid信息";
+            err_resp["result"] = false;
+            std::string body;
+            json_util::Serialize(err_resp, &body);
+            conn->send(body);
+            return;
+        }
+        session_ptr ssp = _sm.get_session_by_ssid(std::stoi(ssid_str));
+        if (ssp.get() == nullptr)
+        {
+            DLOG("登陆过期，请重新登陆");
+            err_resp["optype"] = "hall_ready";
+            err_resp["reason"] = "登陆过期，请重新登陆";
+            err_resp["result"] = false;
+            std::string body;
+            json_util::Serialize(err_resp, &body);
+            conn->send(body);
+            return;
+        }
+        // 判断玩家是否重复登陆
+        if (_om.is_in_game_hall(ssp->get_user()) || _om.is_in_game_room(ssp->get_user()))
+        {
+            DLOG("玩家重复登录");
+            err_resp["optype"] = "hall_ready";
+            err_resp["reason"] = "玩家重复登录";
+            err_resp["result"] = false;
+            std::string body;
+            json_util::Serialize(err_resp, &body);
+            conn->send(body);
+            return;
+        }
+        //将用户添加到游戏大厅
+        _om.enter_game_hall(ssp->get_user(), conn);
+        //给客户端响应成功信息
+        Json::Value resp_json;
+        resp_json["optype"] = "hall_ready";
+        resp_json["result"] = true;
+        std::string body;
+        json_util::Serialize(resp_json, &body);
+        conn->send(body);
+        //将session时常设为永久存在
+        DLOG("%d 号session为永久存在",ssp->ssid());
+        _sm.set_session_expire_time(ssp->ssid(),SESSION_FOREVER);
     }
+    void wsclose_game_hall(wsserver_t::connection_ptr conn)
+    {
+        // 查看有没有session信息
+        Json::Value err_resp;
+        std::string cookie_str = conn->get_request_header("Cookie");
+        if (cookie_str.empty())
+        {
+            DLOG("找不到cookie信息");
+            err_resp["optype"] = "hall_ready";
+            err_resp["reason"] = "没有找到cookie信息";
+            err_resp["result"] = false;
+            std::string body;
+            json_util::Serialize(err_resp, &body);
+            conn->send(body);
+            return;
+        }
+        std::string ssid_str;
+        bool ret = get_cookie_val(cookie_str, "SSID", ssid_str);
+        if (ret == false)
+        {
+            DLOG("找不到ssid信息");
+            err_resp["optype"] = "hall_ready";
+            err_resp["reason"] = "找不到ssid信息";
+            err_resp["result"] = false;
+            std::string body;
+            json_util::Serialize(err_resp, &body);
+            conn->send(body);
+            return;
+        }
+        session_ptr ssp = _sm.get_session_by_ssid(std::stoi(ssid_str));
+        if (ssp.get() == nullptr)
+        {
+            DLOG("登陆过期，请重新登陆");
+            err_resp["optype"] = "hall_ready";
+            err_resp["reason"] = "登陆过期，请重新登陆";
+            err_resp["result"] = false;
+            std::string body;
+            json_util::Serialize(err_resp, &body);
+            conn->send(body);
+            return;
+        }
+        //将玩家从游戏大厅中移除
+        _om.exit_game_hall(ssp->get_user());
+        //将session重新设置为定时销毁
+        _sm.set_session_expire_time(ssp->ssid(),SESSION_TIMEOUT);
+    }
+    void wsopen_callback(websocketpp::connection_hdl hd1) // 连接建立了调用这个函数
+    {
+        wsserver_t::connection_ptr conn = _wssrv.get_con_from_hdl(hd1);
+        websocketpp::http::parser::request req = conn->get_request();
+        std::string uri = req.get_uri();
+        if (uri == "/hall")
+        { // 建立了游戏大厅的长连接
+            return wsopen_game_hall(conn);
+        }
+        else if (uri == "/room")
+        { // 建立了游戏房间的长连接
+        }
+    }
+
     void wsclose_callback(websocketpp::connection_hdl hd1) // 连接断开调用这个函数
     {
+        wsserver_t::connection_ptr conn = _wssrv.get_con_from_hdl(hd1);
+        websocketpp::http::parser::request req = conn->get_request();
+        std::string uri = req.get_uri();
+        if (uri == "/hall")
+        { // 断开了游戏大厅的长连接
+            return wsclose_game_hall(conn);
+        }
+        else if (uri == "/room")
+        { // 断开了游戏房间的长连接
+        }
     }
     void wsmsg_callback(websocketpp::connection_hdl hd1, wsserver_t::message_ptr msg) // 收到消息调用这个函数
     {

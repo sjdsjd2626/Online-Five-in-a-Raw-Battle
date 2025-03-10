@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="./css/common.css">
     <link rel="stylesheet" href="./css/login.css">
 </head>
+
 <body>
     <div class="nav">
         网络五子棋对战游戏
@@ -32,41 +34,54 @@
                 <button id="submit" onclick="reg()">提交</button>
             </div>
         </div>
-    </div> 
+    </div>
 
     <script src="js/jquery.min.js"></script>
     <script>
-        function reg()
-        {
-            if(document.getElementById("user_name").value==""||document.getElementById("password").value=="")
-            {
+        function reg() {//如果用户输入的信息不全
+            if (document.getElementById("user_name").value == "" || document.getElementById("password").value == "") {
                 alert("请输入用户名/密码");
-                document.getElementById("user_name").value="";
-                document.getElementById("password").value="";
+                document.getElementById("user_name").value = "";
+                document.getElementById("password").value = "";
                 return;
             }
-            var reg_info=
-            {
-                username:document.getElementById("user_name").value,
-                password:document.getElementById("password").value
-            }
-            $.ajax({
-                url:"/reg",
-                type:"post",
-                data:JSON.stringify(reg_info),
-                success:function(res)//成功后调用
+            // 定义一个正则表达式来匹配只包含英文字母（大小写）和数字的字符串
+            var regex = /^[a-zA-Z0-9]+$/;
+            var username = document.getElementById("user_name").value;
+            var password = document.getElementById("password").value;
+
+            // 检查是否匹配正则表达式并且长度大于等于8
+            if (!regex.test(username) || username.length < 8) {
+                alert("用户名/密码需使用英文大小写或数字并且字符数大于等于8")
+                document.getElementById("user_name").value = "";
+                document.getElementById("password").value = "";
+                return;
+            } else {
+                var reg_info =
                 {
-                    alert("注册成功");
-                    window.location.assign("/login.html");
-                },
-                error:function(xhr)//失败后调用
-                {
-                    document.getElementById("user_name").value="";
-                    document.getElementById("password").value="";
-                    alert("用户名已被占用");
+                    username: document.getElementById("user_name").value,
+                    password: document.getElementById("password").value
                 }
-            })
+                $.ajax({
+                    url: "/reg",
+                    type: "post",
+                    data: JSON.stringify(reg_info),
+                    success: function (res)//成功后调用
+                    {
+                        alert("注册成功");
+                        window.location.assign("/login.html");
+                    },
+                    error: function (xhr)//失败后调用
+                    {
+                        document.getElementById("user_name").value = "";
+                        document.getElementById("password").value = "";
+                        alert("用户名已被占用");
+                    }
+                })
+            }
+
         }
     </script>
 </body>
+
 </html>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,6 +9,7 @@
     <link rel="stylesheet" href="./css/common.css">
     <link rel="stylesheet" href="./css/game_hall.css">
 </head>
+
 <body>
     <div class="nav">网络五子棋对战游戏</div>
     <!-- 整个页面的容器元素 -->
@@ -16,8 +18,10 @@
         <div>
             <!-- 展示用户信息 -->
             <div id="screen">
-                玩家: 小白 分数: 1860</br>
-                比赛场次: 23 获胜场次: 18
+
+
+
+
             </div>
             <!-- 匹配按钮 -->
             <div id="match-button">开始匹配</div>
@@ -25,5 +29,61 @@
     </div>
 
     <script src="./js/jquery.min.js"></script>
+    <script>
+        function get_user_info() {
+            var ws_url = "ws://" + location.host + "/hall";
+            var ws_hdl = null;
+            window.onbeforeunload = function ()//浏览器窗口关闭前调用这个函数
+            {
+                ws_hdl.close();//断开websocket连接
+            }
+            $.ajax({
+                url: "/info",
+                type: "get",
+                success: function (res) {
+                    var info_html = "<p>" + "用户:" + res.username + " 积分:" + res.score + " 比赛场次:" + res.total_count +
+                        "</br>" + "获胜场次:" + res.win_count + "  失败场次:" + res.lose_count + "<p>";
+                    var screen_div = document.getElementById("screen");
+                    screen_div.innerHTML = info_html;
+
+                    ws_hdl = new WebSocket(ws_url);//去发起websocket长连接请求
+                    ws_hdl.onopen = ws_onopen;
+                    ws_hdl.onclose = ws_onclose;
+                    ws_hdl.onerror = ws_onerror;
+                    ws_hdl.onmessage = ws_onmessage;
+
+
+                },
+                error: function (xhr) {
+                    alert("用户未登录/登录已过期。请重新登录");
+                    location.replace("/login.html");
+                }
+            })
+        }
+        function ws_onopen() {
+            console.log("websocket onopen");
+        }
+        function ws_onclose() {
+            console.log("websocket onclose");
+        }
+        function ws_onerror() {
+            console.log("websocket onerror");
+        }
+        function ws_onmessage(evt) {
+            var message = JSON.parse(evt.data);
+            if (message.result == false) 
+            {
+                alert(message.reason);
+                location.replace("/login.html");
+            }
+            else
+            {
+                alert("长连接建立成功");
+            }
+        }
+        get_user_info();
+
+    </script>
 </body>
+
 </html>
