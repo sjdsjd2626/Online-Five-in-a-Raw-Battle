@@ -199,9 +199,8 @@ private:
             return file_handler(conn);
         }
     }
-    void wsopen_game_hall(wsserver_t::connection_ptr conn)
+    session_ptr get_session_by_cookie(wsserver_t::connection_ptr conn) // 验证用户的session信息
     {
-        // 查看有没有session信息
         Json::Value err_resp;
         std::string cookie_str = conn->get_request_header("Cookie");
         if (cookie_str.empty())
@@ -213,7 +212,7 @@ private:
             std::string body;
             json_util::Serialize(err_resp, &body);
             conn->send(body);
-            return;
+            return session_ptr();
         }
         std::string ssid_str;
         bool ret = get_cookie_val(cookie_str, "SSID", ssid_str);
@@ -226,7 +225,7 @@ private:
             std::string body;
             json_util::Serialize(err_resp, &body);
             conn->send(body);
-            return;
+            return session_ptr();
         }
         session_ptr ssp = _sm.get_session_by_ssid(std::stoi(ssid_str));
         if (ssp.get() == nullptr)
@@ -238,9 +237,16 @@ private:
             std::string body;
             json_util::Serialize(err_resp, &body);
             conn->send(body);
-            return;
+            return session_ptr();
         }
+        return ssp;
+    }
+    void wsopen_game_hall(wsserver_t::connection_ptr conn)
+    {
+        // 查看有没有session信息
+        session_ptr ssp = get_session_by_cookie(conn);
         // 判断玩家是否重复登陆
+        Json::Value err_resp;
         if (_om.is_in_game_hall(ssp->get_user()) || _om.is_in_game_room(ssp->get_user()))
         {
             DLOG("玩家重复登录");
@@ -252,64 +258,61 @@ private:
             conn->send(body);
             return;
         }
-        //将用户添加到游戏大厅
+        // 将用户添加到游戏大厅
         _om.enter_game_hall(ssp->get_user(), conn);
-        //给客户端响应成功信息
+        // 给客户端响应成功信息
         Json::Value resp_json;
         resp_json["optype"] = "hall_ready";
         resp_json["result"] = true;
         std::string body;
         json_util::Serialize(resp_json, &body);
         conn->send(body);
-        //将session时常设为永久存在
-        DLOG("%d 号session为永久存在",ssp->ssid());
-        _sm.set_session_expire_time(ssp->ssid(),SESSION_FOREVER);
+        // 将session时常设为永久存在
+        DLOG("%d 号session为永久存在", ssp->ssid());
+        _sm.set_session_expire_time(ssp->ssid(), SESSION_FOREVER);
     }
-    void wsclose_game_hall(wsserver_t::connection_ptr conn)
+    void wsopen_game_room(wsserver_t::connection_ptr conn)
     {
         // 查看有没有session信息
+        session_ptr ssp = get_session_by_cookie(conn);
+        // 判断玩家是否重复登陆
         Json::Value err_resp;
-        std::string cookie_str = conn->get_request_header("Cookie");
-        if (cookie_str.empty())
+        if (_om.is_in_game_hall(ssp->get_user()) || _om.is_in_game_room(ssp->get_user()))
         {
-            DLOG("找不到cookie信息");
-            err_resp["optype"] = "hall_ready";
-            err_resp["reason"] = "没有找到cookie信息";
+            DLOG("玩家重复登录");
+            err_resp["optype"] = "room_ready";
+            err_resp["reason"] = "玩家重复登录";
             err_resp["result"] = false;
             std::string body;
             json_util::Serialize(err_resp, &body);
             conn->send(body);
             return;
         }
-        std::string ssid_str;
-        bool ret = get_cookie_val(cookie_str, "SSID", ssid_str);
-        if (ret == false)
+        room_ptr rp = _rm.get_room_by_uid(ssp->get_user());
+        if (rp.get() == nullptr)
         {
-            DLOG("找不到ssid信息");
-            err_resp["optype"] = "hall_ready";
-            err_resp["reason"] = "找不到ssid信息";
+            err_resp["optype"] = "room_ready";
+            err_resp["reason"] = "没有找到玩家的房间信息";
             err_resp["result"] = false;
             std::string body;
             json_util::Serialize(err_resp, &body);
             conn->send(body);
             return;
         }
-        session_ptr ssp = _sm.get_session_by_ssid(std::stoi(ssid_str));
-        if (ssp.get() == nullptr)
-        {
-            DLOG("登陆过期，请重新登陆");
-            err_resp["optype"] = "hall_ready";
-            err_resp["reason"] = "登陆过期，请重新登陆";
-            err_resp["result"] = false;
-            std::string body;
-            json_util::Serialize(err_resp, &body);
-            conn->send(body);
-            return;
-        }
-        //将玩家从游戏大厅中移除
-        _om.exit_game_hall(ssp->get_user());
-        //将session重新设置为定时销毁
-        _sm.set_session_expire_time(ssp->ssid(),SESSION_TIMEOUT);
+        // 将用户添加到在线用户管理的房间中
+        _om.enter_game_room(ssp->get_user(), conn);
+        // 将session时间设置为永久
+        _sm.set_session_expire_time(ssp->ssid(), SESSION_FOREVER);
+        Json::Value resp;
+        resp["optype"] = "room_ready";
+        resp["result"] = true;
+        resp["room_id"] = rp->GetRoomId();
+        resp["uid"] = ssp->get_user();
+        resp["white_id"] = rp->GetWhiteUser();
+        resp["black_id"] = rp->GetBlackUser();
+        std::string body;
+        json_util::Serialize(resp, &body);
+        conn->send(body);
     }
     void wsopen_callback(websocketpp::connection_hdl hd1) // 连接建立了调用这个函数
     {
@@ -322,9 +325,30 @@ private:
         }
         else if (uri == "/room")
         { // 建立了游戏房间的长连接
+            return wsopen_game_room(conn);
         }
     }
-
+    void wsclose_game_hall(wsserver_t::connection_ptr conn)
+    {
+        // 查看有没有session信息
+        session_ptr ssp = get_session_by_cookie(conn);
+        // 将玩家从游戏大厅中移除
+        _om.exit_game_hall(ssp->get_user());
+        // 将session重新设置为定时销毁
+        DLOG("%d 号session重新设置为定时销毁", ssp->ssid());
+        _sm.set_session_expire_time(ssp->ssid(), SESSION_TIMEOUT);
+    }
+    void wsclose_game_room(wsserver_t::connection_ptr conn)
+    {
+        // 查看有没有session信息
+        session_ptr ssp = get_session_by_cookie(conn);
+        // 将玩家从游戏大厅中移除
+        _om.exit_game_room(ssp->get_user());
+        // 将session重新设置为定时销毁
+        DLOG("%d 号session重新设置为定时销毁", ssp->ssid());
+        _sm.set_session_expire_time(ssp->ssid(), SESSION_TIMEOUT);
+        _rm.remove_user_of_room(ssp->get_user());
+    }
     void wsclose_callback(websocketpp::connection_hdl hd1) // 连接断开调用这个函数
     {
         wsserver_t::connection_ptr conn = _wssrv.get_con_from_hdl(hd1);
@@ -336,11 +360,110 @@ private:
         }
         else if (uri == "/room")
         { // 断开了游戏房间的长连接
+            return wsclose_game_room(conn);
         }
+    }
+    void wsmessage_game_hall(wsserver_t::connection_ptr conn, wsserver_t::message_ptr msg)
+    {
+        // 查看有没有session信息
+        session_ptr ssp = get_session_by_cookie(conn);
+        if (ssp.get() == nullptr)
+            return;
+        Json::Value resp_json;
+        std::string resp_body;
+        // 获取请求信息
+        std::string req_body = msg->get_payload();
+        Json::Value req_json;
+        bool ret = json_util::UnSerialize(req_body, &req_json);
+        if (ret == false)
+        {
+            resp_json["result"] = false;
+            resp_json["reason"] = "请求信息解析失败";
+            json_util::Serialize(resp_json, &resp_body);
+            conn->send(resp_body);
+            return;
+        }
+        // 用户被加入匹配队列
+        if (!req_json["optype"].isNull() && req_json["optype"].asString() == "match_start")
+        {
+            DLOG("%d 号用户被加入匹配队列", ssp->get_user());
+            _mm.add(ssp->get_user());
+            resp_json["optype"] = "match_start";
+            resp_json["result"] = true;
+            json_util::Serialize(resp_json, &resp_body);
+            conn->send(resp_body);
+            return;
+        }
+        // 用户被移除匹配队列
+        else if (!req_json["optype"].isNull() && req_json["optype"].asString() == "match_stop")
+        {
+            DLOG("%d 号用户被移除匹配队列", ssp->get_user());
+            _mm.del(ssp->get_user());
+            resp_json["optype"] = "match_stop";
+            resp_json["result"] = true;
+            json_util::Serialize(resp_json, &resp_body);
+            conn->send(resp_body);
+            return;
+        }
+        resp_json["optype"] = "unknown";
+        resp_json["result"] = false;
+        json_util::Serialize(resp_json, &resp_body);
+        conn->send(resp_body);
+    }
+    void wsmessage_game_room(wsserver_t::connection_ptr conn, wsserver_t::message_ptr msg)
+    {
+        Json::Value resp_json;
+        // 查看有没有session信息
+        session_ptr ssp = get_session_by_cookie(conn);
+        if (ssp.get() == nullptr)
+            return;
+        // 获取客户端房间信息
+        room_ptr rp = _rm.get_room_by_uid(ssp->get_user());
+        if (rp.get() == nullptr)
+        {
+            resp_json["optype"] = "unknown";
+            resp_json["result"] = false;
+            resp_json["reason"] = "没有找到玩家房间信息";
+            std::string resp_body;
+            json_util::Serialize(resp_json, &resp_body);
+            conn->send(resp_body);
+            return;
+        }
+        // 进行反序列化，看看是不是json格式
+        Json::Value req_json;
+        std::string req_body = msg->get_payload();
+        bool ret = json_util::UnSerialize(req_body, &req_json);
+        if (ret == false)
+        {
+            resp_json["optype"] = "unknown";
+            resp_json["result"] = false;
+            resp_json["reason"] = "请求解析失败";
+            std::string resp_body;
+            json_util::Serialize(resp_json, &resp_body);
+            conn->send(resp_body);
+            return;
+        }
+        // 通过房间管理模块进行消息请求的处理
+        DLOG("通过房间管理模块进行消息请求的处理");
+        return rp->handle_request(req_json);
     }
     void wsmsg_callback(websocketpp::connection_hdl hd1, wsserver_t::message_ptr msg) // 收到消息调用这个函数
     {
+        wsserver_t::connection_ptr conn = _wssrv.get_con_from_hdl(hd1);
+        websocketpp::http::parser::request req = conn->get_request();
+        std::string uri = req.get_uri();
+        if (uri == "/hall")
+        { // 游戏大厅收到消息
+            return wsmessage_game_hall(conn, msg);
+        }
+        else if (uri == "/room")
+        { // 游戏房间收到消息
+            return wsmessage_game_room(conn, msg);
+        }
     }
+
+
+
 
 public:
     gobang_server(const std::string &host,

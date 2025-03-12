@@ -70,7 +70,7 @@ private:
     }
 
 public:
-    room(int room_id, user_table *enterdb, online_manager *online_user) : _room_id(room_id), _room_status(game_start), _player_count(0), _enterdb(enterdb),
+    room(int room_id, user_table *enterdb, online_manager *online_user) : _room_id(room_id), _room_status(game_start), _player_count(2), _enterdb(enterdb),
                                                                           _online_user(online_user), _board(BOARD_ROW, std::vector<int>(BOARD_COL, 0))
     {
         DLOG("%d room create success!!!", room_id);
@@ -97,11 +97,11 @@ public:
     }
     void add_white_user(int uid)
     {
-        _white_id=uid;
+        _white_id = uid;
     }
     void add_black_user(int uid)
     {
-        _black_id=uid;
+        _black_id = uid;
     }
     // 处理下棋动作
     Json::Value handle_chess(Json::Value &req)
@@ -156,7 +156,7 @@ public:
     Json::Value handle_chat(Json::Value &req)
     {
         Json::Value result;
-        std::string message = req["massage"].asCString();
+        std::string message = req["message"].asCString();
         std::vector<std::string> forbidden_words;
         add_forbidden_words(forbidden_words);
         for (auto &e : forbidden_words)
@@ -165,6 +165,7 @@ public:
             {
                 result["optype"] = "chat";
                 result["result"] = false;
+                result["uid"] = req["uid"].asInt();
                 result["reason"] = "语言有违禁词，禁止发送";
                 return result;
             }
@@ -173,7 +174,9 @@ public:
         result["result"] = true;
         result["room_id"] = _room_id;
         result["uid"] = req["uid"].asInt();
+        // result["message"] = req["message"].asCString();
         result["message"] = message.c_str();
+
         return result;
     }
     // 总的处理函数，根据请求类型，分别调用上面两个函数
@@ -231,8 +234,16 @@ public:
             result["row"] = -1;
             result["col"] = -1;
             result["winner"] = (uid == _white_id ? _black_id : _white_id);
+            DLOG("对方掉线，不战而胜");
+            broadcast(result);
         }
-        broadcast(result);
+        
+        if (_player_count == 2)
+        {
+            _enterdb->win(uid == _white_id ? _black_id : _white_id); // 写入数据库操作
+            _enterdb->lose(uid);
+            _room_status = game_over;
+        }
         _player_count--;
     }
     // 将指定的信息广播给房间中的所有玩家
@@ -277,8 +288,7 @@ private:
     std::unordered_map<int, int> _user_to_room;
 
 public:
-    room_manager(user_table *enterdb, online_manager *online_user):
-    _next_rid(1),_enterdb(enterdb),_online_user(online_user)
+    room_manager(user_table *enterdb, online_manager *online_user) : _next_rid(1), _enterdb(enterdb), _online_user(online_user)
     {
         DLOG("房间管理模块初始化完毕");
     }
@@ -289,26 +299,26 @@ public:
     // 为两个用户创建房间，并返回房间的智能指针管理对象
     room_ptr create_room(int uid1, int uid2)
     {
-        //判断两个用户是否都还在游戏大厅中
-        if(_online_user->is_in_game_hall(uid1)==false)
+        // 判断两个用户是否都还在游戏大厅中
+        if (_online_user->is_in_game_hall(uid1) == false)
         {
-            DLOG("用户%d不在游戏大厅，创建房间失败",uid1);
+            DLOG("用户%d不在游戏大厅，创建房间失败", uid1);
             return room_ptr();
         }
-        if(_online_user->is_in_game_hall(uid2)==false)
+        if (_online_user->is_in_game_hall(uid2) == false)
         {
-            DLOG("用户%d不在游戏大厅，创建房间失败",uid2);
+            DLOG("用户%d不在游戏大厅，创建房间失败", uid2);
             return room_ptr();
         }
-        //创建房间，将用户信息添加到房间中
-        std::unique_lock<std::mutex> lock(_mutex);//首先要保护_next_rid，并且要保护map（插入数据和查要隔离）
-        room_ptr rp(new room(_next_rid,_enterdb,_online_user));
+        // 创建房间，将用户信息添加到房间中
+        std::unique_lock<std::mutex> lock(_mutex); // 首先要保护_next_rid，并且要保护map（插入数据和查要隔离）
+        room_ptr rp(new room(_next_rid, _enterdb, _online_user));
         rp->add_white_user(uid1);
         rp->add_black_user(uid2);
-        //将房间管理起来
-        _rooms.insert(std::make_pair(_next_rid,rp));
-        _user_to_room.insert(std::make_pair(uid1,_next_rid));
-        _user_to_room.insert(std::make_pair(uid2,_next_rid));
+        // 将房间管理起来
+        _rooms.insert(std::make_pair(_next_rid, rp));
+        _user_to_room.insert(std::make_pair(uid1, _next_rid));
+        _user_to_room.insert(std::make_pair(uid2, _next_rid));
         _next_rid++;
         return rp;
     }
@@ -316,8 +326,8 @@ public:
     room_ptr get_room_by_rid(int rid)
     {
         std::unique_lock<std::mutex> lock(_mutex);
-        auto it=_rooms.find(rid);
-        if(it==_rooms.end())
+        auto it = _rooms.find(rid);
+        if (it == _rooms.end())
         {
             return room_ptr();
         }
@@ -327,15 +337,15 @@ public:
     room_ptr get_room_by_uid(int uid)
     {
         std::unique_lock<std::mutex> lock(_mutex);
-        //通过用户ID获得房间ID
-        auto uit=_user_to_room.find(uid);
-        if(uit==_user_to_room.end())
+        // 通过用户ID获得房间ID
+        auto uit = _user_to_room.find(uid);
+        if (uit == _user_to_room.end())
         {
             return room_ptr();
         }
-        //通过房间ID获得房间信息
-        auto rit=_rooms.find(uit->second);
-        if(rit==_rooms.end())
+        // 通过房间ID获得房间信息
+        auto rit = _rooms.find(uit->second);
+        if (rit == _rooms.end())
         {
             return room_ptr();
         }
@@ -344,13 +354,13 @@ public:
     // 通过房间ID销毁房间
     void remove_room(int rid)
     {
-        room_ptr rp=get_room_by_rid(rid);
-        if(rp.get()==nullptr)
+        room_ptr rp = get_room_by_rid(rid);
+        if (rp.get() == nullptr)
         {
             return;
         }
-        int uid1=rp->GetWhiteUser();
-        int uid2=rp->GetBlackUser();
+        int uid1 = rp->GetWhiteUser();
+        int uid2 = rp->GetBlackUser();
         std::unique_lock<std::mutex> lock(_mutex);
         _user_to_room.erase(uid1);
         _user_to_room.erase(uid2);
@@ -359,14 +369,15 @@ public:
     // 删除房间中指定用户，如果房间中没有用户了，则销毁房间，用户连接断开时调用
     void remove_user_of_room(int uid)
     {
-        room_ptr rp=get_room_by_uid(uid);
-        if(rp.get()==nullptr)
+        room_ptr rp = get_room_by_uid(uid);
+        if (rp.get() == nullptr)
         {
             return;
         }
         rp->handle_exit(uid);
-        if(rp->GetPlayerCount()==0)
+        if (rp->GetPlayerCount() == 0)
         {
+            // std::cout<<rp->GetPlayerCount()<<std::endl;
             remove_room(rp->GetRoomId());
         }
     }

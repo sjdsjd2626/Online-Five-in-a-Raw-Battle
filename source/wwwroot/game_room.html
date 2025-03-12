@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -8,15 +9,23 @@
     <link rel="stylesheet" href="css/common.css">
     <link rel="stylesheet" href="css/game_room.css">
 </head>
+
 <body>
     <div class="nav">网络五子棋对战游戏</div>
     <div class="container">
+
+
+
         <div id="chess_area">
             <!-- 棋盘区域, 需要基于 canvas 进行实现 -->
             <canvas id="chess" width="450px" height="450px"></canvas>
             <!-- 显示区域 -->
             <div id="screen"> 等待玩家连接中... </div>
+
         </div>
+
+
+
         <div id="chat_area" width="400px" height="300px">
             <div id="chat_show">
                 <p id="self_msg">你好！</p></br>
@@ -27,14 +36,24 @@
                 <button id="chat_button">发送</button>
             </div>
         </div>
+
+
+
+
     </div>
+    <script src="./js/jquery.min.js"></script>
     <script>
+
+
+
+        var global_info;
         let chessBoard = [];
         let BOARD_ROW_AND_COL = 15;
         let chess = document.getElementById('chess');
         //获取chess控件区域2d画布
         let context = chess.getContext('2d');
         function initGame() {
+
             initBoard();
             // 背景图片
             let logo = new Image();
@@ -42,7 +61,7 @@
             logo.onload = function () {
                 // 绘制图片
                 context.drawImage(logo, 0, 0, 450, 450);
-                // 绘制棋盘
+                // 绘制棋盘网格线
                 drawChessBoard();
             }
         }
@@ -60,11 +79,11 @@
             for (let i = 0; i < BOARD_ROW_AND_COL; i++) {
                 //横向的线条
                 context.moveTo(15 + i * 30, 15);
-                context.lineTo(15 + i * 30, 430); 
+                context.lineTo(15 + i * 30, 430);
                 context.stroke();
                 //纵向的线条
                 context.moveTo(15, 15 + i * 30);
-                context.lineTo(435, 15 + i * 30); 
+                context.lineTo(435, 15 + i * 30);
                 context.stroke();
             }
         }
@@ -89,19 +108,176 @@
         }
         //棋盘区域的点击事件
         chess.onclick = function (e) {
+            var screenElement = document.getElementById("screen");
+            if (screenElement && screenElement.textContent.trim() === "对方走棋") {
+                alert("对方走棋中...");
+                return;
+            }
             let x = e.offsetX;
             let y = e.offsetY;
             // 注意, 横坐标是列, 纵坐标是行
             // 这里是为了让点击操作能够对应到网格线上
-            let col = Math.floor(x / 30);
-            let row = Math.floor(y / 30);
-            if (chessBoard[row][col] != 0) {
+            let col1 = Math.floor(x / 30);
+            let row1 = Math.floor(y / 30);
+            if (chessBoard[row1][col1] != 0) {
                 alert("当前位置已有棋子！");
                 return;
             }
-            oneStep(col, row, true);
+            var req =
+            {
+                optype: "put_chess",
+                row: row1,
+                col: col1,
+                uid: global_info.uid,
+                room_id: global_info.room_id
+            };
+            ws_hdl.send(JSON.stringify(req));
+            oneStep(col1, row1, (global_info.uid == global_info.white_id ? true : false));
+            chessBoard[row1][col1] = 1;
+
         }
+        chat_button.onclick = function ()//发送按钮的点击事件
+        {
+            if (document.getElementById("chat_input").value == "") {
+                return;
+            }
+            var send_msg =
+            {
+                optype: "chat",
+                room_id: global_info.room_id,
+                uid: global_info.uid,
+                message: document.getElementById("chat_input").value
+            };
+            ws_hdl.send(JSON.stringify(send_msg));
+            document.getElementById("chat_input").value = "";
+        }
+
+
+
+
+
+
+
         initGame();
+        var ws_url = "ws://" + location.host + "/room";
+        var ws_hdl = new WebSocket(ws_url);
+
+
+        window.onbeforeunload = function () {
+            ws_hdl.close();
+        }
+
+        ws_hdl.onopen = function () {
+            console.log("房间长连接建立成功");
+        }
+        ws_hdl.onclose = function () {
+            console.log("房间长连接断开");
+        }
+        ws_hdl.onerror = function () {
+            console.log("房间长连接出错");
+        }
+        ws_hdl.onmessage = function (evt) {
+            var resp_json = JSON.parse(evt.data);
+            // if (resp_json.result == false&&resp_json.uid == global_info.uid)
+            // {
+            //     alert(resp_json.reason);
+            // }
+            if (resp_json.result == false) {
+                if (resp_json.optype != "chat") {
+                    alert(resp_json.reason);//限制玩家重复登陆
+                    location.replace("/login.html");
+                    return;
+                }
+            }
+            if (resp_json.optype == "room_ready") {
+                global_info =
+                {
+                    room_id: resp_json.room_id,
+                    uid: resp_json.uid,
+                    white_id: resp_json.white_id,
+                    black_id: resp_json.black_id
+                };
+                //白棋先行
+                var me_first = (global_info.uid == global_info.white_id ? true : false);
+                var screen = document.getElementById("screen");
+                if (me_first == true) {
+                    screen.innerHTML = "己方走棋";
+                }
+                else {
+                    screen.innerHTML = "对方走棋";
+                }
+                console.log(global_info);
+                return;
+            }
+            if (resp_json.optype == "put_chess") {
+                if (resp_json.winner != 0) {//有获胜者了
+                    if (resp_json.col != -1 && resp_json.row != -1) {
+                        oneStep(resp_json.col, resp_json.row, (resp_json.winner == global_info.white_id ? true : false));
+                        chessBoard[resp_json.row][resp_json.col] = 1;
+                    }
+                    if (resp_json.winner == global_info.uid) {
+                        var screen = document.getElementById("screen");
+                        if(resp_json.reason=="对方掉线，不战而胜")
+                        {
+                            screen.innerHTML = "对方掉线，不战而胜";
+                        }
+                        else
+                        {
+                            screen.innerHTML = "五星连珠，战无敌";
+                        }
+                    }
+                    else {
+                        var screen = document.getElementById("screen");
+                        screen.innerHTML = "很遗憾，你输了";
+                    }
+                    var left = document.getElementById("chess_area");
+                    var gobackLink = document.createElement("a"); // 创建一个 <a> 元素
+                    gobackLink.href = "/game_hall.html"; // 设置 href 属性
+                    gobackLink.textContent = "返回大厅"; // 设置链接文本
+                    left.appendChild(gobackLink); // 将链接添加到 left 指向的元素中
+                }
+                else//没有获胜者
+                {
+                    if (resp_json.uid != global_info.uid)//对方下的棋子
+                    {
+                        oneStep(resp_json.col, resp_json.row, (global_info.uid == global_info.white_id ? false : true));
+                        chessBoard[resp_json.row][resp_json.col] = 1;
+                        var screen = document.getElementById("screen");
+                        screen.innerHTML = "己方走棋";
+                    }
+                    else {
+                        var screen = document.getElementById("screen");
+                        screen.innerHTML = "对方走棋";
+                    }
+                }
+                return;
+            }
+            if (resp_json.optype == "chat") {
+                if (resp_json.result == false && resp_json.uid == global_info.uid) {
+                    alert(resp_json.reason);
+                    return;
+                }
+                var msg_div = document.createElement("p");
+                msg_div.innerHTML = resp_json.message;
+                if (resp_json.result == true && resp_json.uid == global_info.uid)//己方说的
+                {
+                    msg_div.setAttribute("id", "self_msg");
+                }
+                else if (resp_json.result == true && resp_json.uid != global_info.uid)//对方说的
+                {
+                    msg_div.setAttribute("id", "peer_msg");
+                }
+                else return;
+                var br_div = document.createElement("br");
+                var msg_show = document.getElementById("chat_show");
+                msg_show.appendChild(msg_div);
+                msg_show.appendChild(br_div);
+                // 假设msg_div是最新消息的DOM元素
+                msg_div.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
     </script>
 </body>
+
 </html>

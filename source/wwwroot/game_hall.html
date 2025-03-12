@@ -30,13 +30,39 @@
 
     <script src="./js/jquery.min.js"></script>
     <script>
-        function get_user_info() {
-            var ws_url = "ws://" + location.host + "/hall";
-            var ws_hdl = null;
-            window.onbeforeunload = function ()//浏览器窗口关闭前调用这个函数
-            {
-                ws_hdl.close();//断开websocket连接
+
+        var ws_url = "ws://" + location.host + "/hall";
+        var ws_hdl = null;
+
+
+        window.onbeforeunload = function ()//浏览器窗口关闭前调用这个函数
+        {
+            ws_hdl.close();//断开websocket连接
+        }
+
+
+        var button_flag = "stop";
+        var be = document.getElementById("match-button");
+        be.onclick = function () {
+            if (button_flag == "stop") {
+                var req_json =
+                {
+                    optype: "match_start"
+                }
+                ws_hdl.send(JSON.stringify(req_json));
             }
+            else {
+                var req_json =
+                {
+                    optype: "match_stop"
+                }
+                ws_hdl.send(JSON.stringify(req_json));
+            }
+        }
+
+
+
+        function get_user_info() {
             $.ajax({
                 url: "/info",
                 type: "get",
@@ -70,17 +96,51 @@
             console.log("websocket onerror");
         }
         function ws_onmessage(evt) {
-            var message = JSON.parse(evt.data);
-            if (message.result == false) 
-            {
-                alert(message.reason);
+            var resp_json = JSON.parse(evt.data);
+            if (resp_json.result == false) {
+                alert(resp_json.reason);//限制玩家重复登陆
                 location.replace("/login.html");
+                return;
             }
-            else
-            {
-                alert("长连接建立成功");
+            if (resp_json.optype == "hall_ready") {
+                alert("游戏大厅连接建立成功");
+                return;
+            }
+            else if (resp_json.optype == "match_success") {
+                alert("对战匹配成功，进入游戏房间");
+                location.replace("/game_room.html");
+                return;
+            }
+            else if (resp_json.optype == "match_start") {
+                console.log("玩家加入匹配队列");
+                button_flag = "start";
+                be.innerHTML = "匹配中...点击按钮停止匹配"
+                return;
+            }
+            else if (resp_json.optype == "match_stop") {
+                console.log("玩家退出匹配");
+                button_flag = "stop";
+                be.innerHTML = "开始匹配"
+                return;
+            }
+            else {
+                location.replace("/login.html");
+                return;
             }
         }
+
+
+
+
+
+
+
+
+
+
+
+
+
         get_user_info();
 
     </script>
