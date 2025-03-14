@@ -1,0 +1,176 @@
+[12:11:21:room.hpp:293] 房间管理模块初始化完毕
+[12:11:21:session.hpp:42] session 管理器初始化完毕
+[12:11:21:matcher.hpp:148] 游戏匹配模块初始化完毕...
+[12:12:11:enterdb.hpp:71] user info is not exists,login failed
+[12:13:27:session.hpp:18] session 0x59ae8cf1e2d0 被创建
+[12:13:29:server.hpp:175] 2578383452 的session过期时间刷新
+[12:13:29:server.hpp:271] 1 号session为永久存在
+[12:13:32:server.hpp:389] 49 号用户被加入匹配队列
+[12:13:56:server.hpp:400] 49 号用户被移除匹配队列
+[2025-03-13 12:14:44] [info] asio async_read_at_least error: system:104 (Connection reset by peer)
+[2025-03-13 12:14:44] [error] handle_read_frame error: websocketpp.transport:2 (Underlying Transport Error)
+[12:14:44:server.hpp:338] 1 号session重新设置为定时销毁
+[12:14:53:session.hpp:18] session 0x59ae8cf1a3c0 被创建
+[12:14:55:server.hpp:175] xiaobai 的session过期时间刷新
+[12:14:55:server.hpp:271] 2 号session为永久存在
+[12:15:06:server.hpp:389] 8 号用户被加入匹配队列
+[12:15:14:session.hpp:19] session 0x59ae8cf1e2d0 被释放
+[12:15:18:session.hpp:18] session 0x59ae8d063e70 被创建
+[12:15:19:server.hpp:175] 2578383452 的session过期时间刷新
+[12:15:19:server.hpp:271] 3 号session为永久存在
+[12:15:22:server.hpp:389] 49 号用户被加入匹配队列
+[12:15:22:room.hpp:76] 1 room create success!!!
+[12:15:24:server.hpp:338] 3 号session重新设置为定时销毁
+[12:15:26:server.hpp:338] 2 号session重新设置为定时销毁
+[12:15:34:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:15:34:session.hpp:18] session 0x59ae8d04c050 被创建
+[2025-03-13 12:15:39] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[12:15:39:server.hpp:348] 3 号session重新设置为定时销毁
+[12:15:39:room.hpp:237] 对方掉线，不战而胜
+[12:15:39:server.hpp:175] 2578383452 的session过期时间刷新
+[12:15:39:server.hpp:271] 4 号session为永久存在
+[12:15:41:server.hpp:389] 49 号用户被加入匹配队列
+[12:15:43:server.hpp:400] 49 号用户被移除匹配队列
+[12:15:48:server.hpp:348] 2 号session重新设置为定时销毁
+[12:15:48:room.hpp:80] 1 room destroy success!!!
+[12:15:48:server.hpp:175] xiaobai 的session过期时间刷新
+[12:15:48:server.hpp:271] 2 号session为永久存在
+[12:15:51:server.hpp:389] 8 号用户被加入匹配队列
+[12:15:52:server.hpp:389] 49 号用户被加入匹配队列
+[12:15:52:room.hpp:76] 2 room create success!!!
+[12:15:53:server.hpp:338] 4 号session重新设置为定时销毁
+[12:15:54:server.hpp:338] 2 号session重新设置为定时销毁
+[12:15:59:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[2025-03-13 12:16:00] [error] handle_read_handshake error: websocketpp.transport:7 (End of File)
+[2025-03-13 12:16:00] [error] handle_read_handshake error: websocketpp.transport:7 (End of File)
+[12:16:06:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:06:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:09:session.hpp:19] session 0x59ae8d063e70 被释放
+[2025-03-13 12:16:16] [error] handle_read_frame error: websocketpp.transport:7 (End of File)
+[12:16:16:server.hpp:348] 4 号session重新设置为定时销毁
+[12:16:16:room.hpp:237] 对方掉线，不战而胜
+[12:16:21:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:22:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:23:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:23:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:23:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:24:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:24:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:24:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:25:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:26:session.hpp:18] session 0x59ae8cf1dcc0 被创建
+[12:16:27:server.hpp:175] xiaohei 的session过期时间刷新
+[12:16:27:server.hpp:271] 5 号session为永久存在
+[12:16:27:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:28:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:28:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:29:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:29:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:30:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:36:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:37:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:37:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:37:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:37:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:38:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:38:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:43:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:46:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:46:session.hpp:19] session 0x59ae8d04c050 被释放
+[12:16:46:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:47:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:47:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:48:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:48:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:49:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:16:49:server.hpp:348] 2 号session重新设置为定时销毁
+[12:16:49:room.hpp:80] 2 room destroy success!!!
+[12:16:50:server.hpp:175] xiaobai 的session过期时间刷新
+[12:16:50:server.hpp:271] 2 号session为永久存在
+[12:17:01:server.hpp:389] 9 号用户被加入匹配队列
+[12:17:01:server.hpp:389] 8 号用户被加入匹配队列
+[12:17:16:server.hpp:400] 8 号用户被移除匹配队列
+[12:17:29:server.hpp:175] xiaobai 的session过期时间刷新
+[12:17:29:server.hpp:252] 玩家重复登录
+[12:17:31:server.hpp:338] 2 号session重新设置为定时销毁
+[12:17:32:server.hpp:338] 2 号session重新设置为定时销毁
+[12:17:50:session.hpp:18] session 0x59ae8d06f940 被创建
+[12:17:51:server.hpp:175] 2578383452 的session过期时间刷新
+[12:17:51:server.hpp:271] 6 号session为永久存在
+[12:18:01:server.hpp:389] 49 号用户被加入匹配队列
+[12:18:01:room.hpp:76] 3 room create success!!!
+[12:18:02:session.hpp:19] session 0x59ae8cf1a3c0 被释放
+[12:18:04:server.hpp:338] 6 号session重新设置为定时销毁
+[12:18:14:server.hpp:338] 5 号session重新设置为定时销毁
+[12:18:15:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:18:19:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:18:24:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:18:26:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:18:28:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:18:30:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:18:34:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:18:38:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:18:43:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:18:49:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:18:53:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:04:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:12:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:13:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:15:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:16:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:18:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:19:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:19:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:19:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:20:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:20:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:20:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:21:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:21:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:23:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:23:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:24:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:24:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:24:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:27:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:28:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:29:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:29:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:30:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:30:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:31:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:31:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:32:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:41:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:43:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:44:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:45:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:46:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:48:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:49:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:50:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:51:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:51:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:53:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:58:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:59:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:19:59:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:20:00:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:20:02:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:20:06:server.hpp:447] 通过房间管理模块进行消息请求的处理
+[12:[09:56:27:room.hpp:293] 房间管理模块初始化完毕
+[09:56:27:session.hpp:42] session 管理器初始化完毕
+[09:56:27:matcher.hpp:148] 游戏匹配模块初始化完毕...
+[09:59:51:session.hpp:18] session 0x5d674c131ea0 被创建
+[09:59:52:server.hpp:175] aaa 的session过期时间刷新
+[09:59:52:server.hpp:271] 1 号session为永久存在
+[10:00:03:session.hpp:18] session 0x5d674c12fdc0 被创建
+[10:00:04:server.hpp:175] bbb 的session过期时间刷新
+[10:00:04:server.hpp:271] 2 号session为永久存在
+[10:00:06:server.hpp:389] 51 号用户被加入匹配队列
+[10:00:08:server.hpp:389] 50 号用户被加入匹配队列
+[10:00:08:room.hpp:76] 1 room create success!!!
+[10:00:09:server.hpp:338] 1 号session重新设置为定时销毁
+[10:00:09:server.hpp:338] 2 号session重新设置为定时销毁
+[2025-03-14 10:00:15] [info] asio async_write error: system:32 (Broken pipe)
+[2025-03-14 10:00:15] [error] handle_write_http_response error: websocketpp.transport:2 (Underlying Transport Error)

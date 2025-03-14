@@ -50,9 +50,9 @@
             var username = document.getElementById("user_name").value;
             var password = document.getElementById("password").value;
 
-            // 检查是否匹配正则表达式并且长度大于等于8
-            if (!regex.test(username) || username.length < 8) {
-                alert("用户名/密码需使用英文大小写或数字并且字符数大于等于8")
+            // 检查是否匹配正则表达式并且长度大于等于3
+            if ((!regex.test(username) || username.length < 3)&&(!regex.test(password) || password.length < 3)) {
+                alert("用户名/密码需使用英文大小写或数字并且字符数大于等于3")
                 document.getElementById("user_name").value = "";
                 document.getElementById("password").value = "";
                 return;

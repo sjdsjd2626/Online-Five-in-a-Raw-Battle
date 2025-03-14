@@ -189,6 +189,7 @@ public:
             ELOG("请求的房间号:%d 与当前房间的房间号:%d 不匹配，任务不执行", room_id, _room_id); // 这个明显不是前端的错误，不需要给前端返回
             return;
         }
+        if(_room_status==game_over)return;
         // 判断请求类型，分别交给不同函数
         Json::Value result;
         std::string type = req["optype"].asCString();
@@ -236,9 +237,8 @@ public:
             result["winner"] = (uid == _white_id ? _black_id : _white_id);
             DLOG("对方掉线，不战而胜");
             broadcast(result);
-        }
-        
-        if (_player_count == 2)
+        }     
+        if (_room_status == game_start&&_player_count == 2)
         {
             _enterdb->win(uid == _white_id ? _black_id : _white_id); // 写入数据库操作
             _enterdb->lose(uid);

@@ -5,6 +5,7 @@
 #define USER "root"
 #define PASSWD "123456"
 #define DBNAME "gobang"
+#include<unistd.h>
 void testmysql()
 {
 // LOG("%s:%d\n","hello",100);
@@ -124,6 +125,7 @@ void testrooms()
 }
 int main()
 {
+    // daemon(0,0);
     gobang_server gs(HOST,USER,PASSWD,DBNAME);
     gs.start(5566);
     return 0;

@@ -47,6 +47,7 @@
 
 
         var global_info;
+        var global_isgaming=true;
         let chessBoard = [];
         let BOARD_ROW_AND_COL = 15;
         let chess = document.getElementById('chess');
@@ -108,6 +109,11 @@
         }
         //棋盘区域的点击事件
         chess.onclick = function (e) {
+            if(global_isgaming==false)
+            {
+                alert("游戏结束");
+                return;
+            }
             var screenElement = document.getElementById("screen");
             if (screenElement && screenElement.textContent.trim() === "对方走棋") {
                 alert("对方走棋中...");
@@ -138,6 +144,11 @@
         }
         chat_button.onclick = function ()//发送按钮的点击事件
         {
+            if(global_isgaming==false)
+            {
+                alert("游戏结束");
+                return;
+            }
             if (document.getElementById("chat_input").value == "") {
                 return;
             }
@@ -177,11 +188,10 @@
             console.log("房间长连接出错");
         }
         ws_hdl.onmessage = function (evt) {
+            if(global_isgaming==false)
+                return;
             var resp_json = JSON.parse(evt.data);
-            // if (resp_json.result == false&&resp_json.uid == global_info.uid)
-            // {
-            //     alert(resp_json.reason);
-            // }
+
             if (resp_json.result == false) {
                 if (resp_json.optype != "chat") {
                     alert(resp_json.reason);//限制玩家重复登陆
@@ -211,6 +221,7 @@
             }
             if (resp_json.optype == "put_chess") {
                 if (resp_json.winner != 0) {//有获胜者了
+                    global_isgaming=false;
                     if (resp_json.col != -1 && resp_json.row != -1) {
                         oneStep(resp_json.col, resp_json.row, (resp_json.winner == global_info.white_id ? true : false));
                         chessBoard[resp_json.row][resp_json.col] = 1;
